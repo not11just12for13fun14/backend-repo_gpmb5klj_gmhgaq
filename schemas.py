@@ -12,37 +12,56 @@ Model name is converted to lowercase for the collection name:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Dict, List
 
-# Example schemas (replace with your own):
+# Core game schemas for Litera
+
+class Player(BaseModel):
+    """
+    Player profile/state
+    Collection name: "player"
+    """
+    session_id: str = Field(..., description="Client-generated session identifier")
+    public_trust: int = Field(50, ge=0, le=100)
+    personal_clout: int = Field(50, ge=0, le=100)
+    professional_skill: int = Field(0, ge=0, le=100)
+    relationships: Dict[str, int] = Field(default_factory=dict, description="Character -> affinity score 0-100")
+
+class ActionLog(BaseModel):
+    """
+    Logs player actions across modules
+    Collection name: "actionlog"
+    """
+    session_id: str
+    module: str = Field(..., description="prebunking | ethical | professional")
+    action_type: str
+    payload: Dict = Field(default_factory=dict)
+    outcome: Dict = Field(default_factory=dict)
+
+class PrebunkingPost(BaseModel):
+    """
+    Seed content for the feed (not strictly required for gameplay)
+    Collection name: "prebunkingpost"
+    """
+    post_id: str
+    content: str
+    source: str
+    technique: str = Field(..., description="manipulation technique, e.g., 'emotion', 'false context'")
+    label: str = Field(..., description="verified | misleading | hoax")
+    hints: List[str] = Field(default_factory=list)
+
+# Legacy example schemas kept for reference (unused by the game):
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    name: str
+    email: str
+    address: str
+    age: Optional[int] = None
+    is_active: bool = True
 
 class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+    title: str
+    description: Optional[str] = None
+    price: float
+    category: str
+    in_stock: bool = True
